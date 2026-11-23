@@ -1,0 +1,18 @@
+// =============================================================================
+// <%= mod %> Stimulus controllers  -  loader: stimulus-loading (<%= lazy? ? "lazy" : "eager" %>)
+// =============================================================================
+// Every app/javascript/<%= ns %>/controllers/*_controller.js is registered by its
+// file name:   hello_controller.js       ->  data-controller="hello"
+//              admin/user_controller.js  ->  data-controller="admin--user"
+//
+// Need a specific load order, or one controller registered by hand?
+//   Import it below and call application.register("name", Controller)
+//   BEFORE the load call.
+//
+// Prefer namespaced names (data-controller="<%= identifier_prefix %>--hello")?
+//   Re-run the generator with --loader=prefixed
+// =============================================================================
+import { application } from "<%= ns %>/controllers/application"
+import { <%= lazy? ? "lazyLoadControllersFrom" : "eagerLoadControllersFrom" %> } from "@hotwired/stimulus-loading"
+
+<%= lazy? ? "lazyLoadControllersFrom" : "eagerLoadControllersFrom" %>("<%= ns %>/controllers", application)

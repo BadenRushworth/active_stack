@@ -1,3 +1,6 @@
 /* Nested folder on purpose: if this applies, the helper found CSS recursively. */
+.<%= identifier_prefix %>-demo { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+.<%= identifier_prefix %>-demo section { margin: 1rem 0; padding: 1rem; border: 2px dashed #bbb; border-radius: .5rem; }
+.<%= identifier_prefix %>-pending { color: #999; }
 .<%= identifier_prefix %>-ok { color: #1a7f37; font-weight: 600; }
 .<%= identifier_prefix %>-css-check { border: 3px solid #1a7f37; color: #1a7f37; padding: .5rem; border-radius: .5rem; }

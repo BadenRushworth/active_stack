@@ -1,11 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Usage: <div data-controller="<%= identifier_prefix %>--demo">
+// Usage: <div data-controller="<%= demo_identifier %>">
 export default class extends Controller {
   static targets = ["output"]
 
   connect() {
-    this.outputTarget.textContent = "Stimulus is connected (<%= identifier_prefix %>--demo)"
+    this.outputTarget.textContent = "Stimulus is connected (<%= demo_identifier %>)"
     this.outputTarget.classList.add("<%= identifier_prefix %>-ok")
   }
 }

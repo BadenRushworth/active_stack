@@ -1,0 +1,34 @@
+// =============================================================================
+// <%= mod %> Stimulus controllers  -  loader: prefixed
+// =============================================================================
+// Every *_controller.js pinned under <%= ns %>/controllers is registered as
+// "<%= identifier_prefix %>--<name>", so several engines can share one page without
+// controller name clashes:
+//   hello_controller.js  ->  data-controller="<%= identifier_prefix %>--hello"
+//
+// Need a specific load order, or one controller registered by hand?
+//   Add it ABOVE the loop with application.register("<%= identifier_prefix %>--name", Controller).
+//
+// Prefer plain names (data-controller="hello")?
+//   Re-run the generator with --loader=stimulus-loading
+// =============================================================================
+import { application } from "<%= ns %>/controllers/application"
+
+// --- loader: reads the page's importmap, no extra dependency ----------------
+const PREFIX = "<%= ns %>/controllers/"
+const importmap = document.querySelector("script[type=importmap]")
+const imports = importmap ? JSON.parse(importmap.textContent).imports : {}
+
+for (const specifier of Object.keys(imports)) {
+  if (!specifier.startsWith(PREFIX) || !specifier.endsWith("_controller")) continue
+
+  const name = specifier
+    .slice(PREFIX.length)
+    .replace(/_controller$/, "")
+    .replace(/\//g, "--")
+    .replace(/_/g, "-")
+
+  import(specifier)
+    .then((module) => application.register("<%= identifier_prefix %>--" + name, module.default))
+    .catch((error) => console.error(`<%= mod %>: failed to load ${specifier}`, error))
+}

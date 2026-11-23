@@ -1,8 +1,3 @@
 /* app/assets/stylesheets/<%= ns %>/application.css
    Propshaft has no manifests: <%= helper_prefix %>_stylesheet_tags lists every .css
    under <%= ns %>/ for you, so just add files. */
-<% if demo? -%>
-.<%= identifier_prefix %>-demo { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
-.<%= identifier_prefix %>-demo section { margin: 1rem 0; padding: 1rem; border: 2px dashed #bbb; border-radius: .5rem; }
-.<%= identifier_prefix %>-pending { color: #999; }
-<% end -%>

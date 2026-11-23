@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "erb"
+require "fileutils"
 require "rails/generators"
 require "active_engine/ui"
 require "active_engine/config"
@@ -90,15 +91,53 @@ module ActiveEngine
         ERB.new(File.binread(path), trim_mode: "-", eoutvar: "@output_buffer").result(instance_eval("binding"))
       end
 
-      # Renders a template and writes it only if it differs from what is on disk.
+      # Generated file (concerns, helpers, demo): written when new or changed. A changed
+      # existing file is copied to <file>.backup first, so nothing is ever lost.
       def put(source, destination)
+        write_rendered(render_tt(source), destination)
+      end
+
+      # Starter file the dev owns (entry points, importmap): created once, then left alone.
+      # --force regenerates it (with a backup).
+      def seed(source, destination)
         content = render_tt(source)
-        if File.exist?(destination) && File.binread(destination) == content
-          unchanged!
-        else
+        File.exist?(destination) && !options[:force] ? unchanged! : write_rendered(content, destination)
+      end
+
+      # Stylesheet the dev may already have: add the starter comment instead of replacing the file.
+      def seed_comment(source, destination, marker:)
+        content = render_tt(source)
+        if !File.exist?(destination)
           create_file destination, content
           touched!
+        elsif File.read(destination).include?(marker)
+          unchanged!
+        else
+          prepend_to_file destination, "#{content}\n"
+          touched!
         end
+      end
+
+      def write_rendered(content, destination)
+        if !File.exist?(destination)
+          create_file destination, content
+        elsif File.binread(destination) == content || options[:skip]
+          return unchanged!
+        else
+          backup_file(destination)
+          create_file destination, content, force: true
+        end
+        touched!
+      end
+
+      # Copies path to path.backup (.backup.2, .backup.3 ... if one already exists).
+      def backup_file(path)
+        target = "#{path}.backup"
+        count  = 1
+        target = "#{path}.backup.#{count += 1}" while File.exist?(target)
+        FileUtils.cp(path, target)
+        @backups = @backups.to_i + 1
+        say_status :backup, target, :yellow
       end
 
       def touched!   = (@touched = @touched.to_i + 1)
@@ -111,6 +150,7 @@ module ActiveEngine
         else
           ui_ok "Already up to date (#{@unchanged.to_i} checked)"
         end
+        ui_info "#{@backups} file(s) backed up as *.backup - delete them once you've checked the changes." if @backups.to_i.positive?
       end
 
       # Adds `require` + `include <Mod>::Concerns::<Name>` right after isolate_namespace
