@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+module <%= mod %>
+  class DemoController < ApplicationController
+    helper <%= mod %>::AssetsHelper
+    layout "<%= engine_path %>/demo"
+
+    def index; end
+  end
+end

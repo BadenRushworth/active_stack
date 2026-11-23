@@ -1,0 +1,8 @@
+import { Application } from "@hotwired/stimulus"
+
+// <%= mod %> gets its own Stimulus instance, independent of the host's.
+const application = Application.start()
+application.debug = false
+window.<%= js_global %> = application
+
+export { application }

@@ -1,0 +1,3 @@
+/* Nested folder on purpose: if this applies, the helper found CSS recursively. */
+.<%= identifier_prefix %>-ok { color: #1a7f37; font-weight: 600; }
+.<%= identifier_prefix %>-css-check { border: 3px solid #1a7f37; color: #1a7f37; padding: .5rem; border-radius: .5rem; }

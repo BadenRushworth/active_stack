@@ -1,0 +1,6 @@
+# <%= mod %> importmap.
+# Files under app/javascript/<%= ns %>/ are pinned automatically (as <%= ns %>/<file>).
+# List vendor and gem pins here. For local files use absolute paths:
+#   pin "my_lib", to: "my_lib.js"
+pin "@hotwired/turbo-rails", to: "turbo.min.js"
+pin "@hotwired/stimulus",    to: "stimulus.min.js"

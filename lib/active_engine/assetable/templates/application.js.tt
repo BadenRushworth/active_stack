@@ -1,0 +1,4 @@
+// app/javascript/<%= ns %>/application.js
+// Entry point for <%= mod %>, loaded by <%= helper_prefix %>_importmap_tags.
+import "@hotwired/turbo-rails"
+import "<%= ns %>/controllers"

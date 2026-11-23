@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= mod %> demo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%%= csrf_meta_tags %>
+    <%%= csp_meta_tag %>
+    <%%= <%= helper_prefix %>_stylesheet_tags media: "all" %>
+    <%%= <%= helper_prefix %>_importmap_tags %>
+  </head>
+  <body>
+    <%%= yield %>
+  </body>
+</html>

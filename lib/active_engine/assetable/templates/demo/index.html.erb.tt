@@ -1,0 +1,14 @@
+<div class="<%= identifier_prefix %>-demo">
+  <h1><%= mod %> demo</h1>
+  <p>Checks that the importmap, Stimulus and Propshaft helpers work in this engine (<%= mode %> mode).</p>
+
+  <section data-controller="<%= identifier_prefix %>--demo">
+    <h2>1. Importmap + Stimulus</h2>
+    <p data-<%= identifier_prefix %>--demo-target="output" class="<%= identifier_prefix %>-pending">Waiting for Stimulus...</p>
+  </section>
+
+  <section>
+    <h2>2. Propshaft stylesheets</h2>
+    <p class="<%= identifier_prefix %>-css-check">Green border and text = application.css and components/demo.css both loaded.</p>
+  </section>
+</div>
