@@ -35,7 +35,10 @@ Options every tool understands:
 | `-i`, `--interactive` | Prompt for choices instead of using saved/default values |
 | `--force`, `-f` | Regenerate starter files too (a backup is made first) |
 | `--skip` | Never overwrite a changed generated file |
+| `-n`, `--dry-run` | Show what would change and write nothing |
 | `--only a b` | (hub only) skip the menu and run these tools |
+| `--doctor` | (hub only) check the engine against `.active_engine.yml`, writes nothing |
+| `--upgrade` | (hub only) re-run every installed tool from `.active_engine.yml` |
 
 Precedence everywhere: **command-line flag > `.active_engine.yml` > built-in default**.
 
@@ -47,7 +50,7 @@ Nothing prompts. Every file falls into one of three kinds:
 |---|---|---|
 | Starter files you own | `application.js`, `controllers/index.js`, `config/importmap.rb` | Created once, then never touched. `--force` regenerates them (with a backup). |
 | Existing stylesheet | `application.css` | Missing: created. Existing: the starter comment is inserted at the top and your CSS is kept. |
-| Generated code | concerns, registry, helpers, demo files | Written when new or changed. A changed existing file is copied to `<file>.backup` first (`.backup.2`, `.backup.3` ... if one exists). |
+| Generated code | concerns, registry, helpers, demo files | Written when new or changed. A changed existing file is copied to `<file>.backup` first (`.backup.2`, `.backup.3` ... if one exists), unless the file still matches the checksum recorded in `.active_engine.yml` (you never edited it). |
 
 Layouts are wired too: the scaffold's `stylesheet_link_tag "<ns>/application"` line is replaced
 with the helper (the layout is backed up first), and the importmap tag is added before `</head>`.
@@ -72,9 +75,34 @@ assetable:
   registry: Lifeguard.assets
 migratable:
   installed: true
+files:
+  lib/demo/concerns/assetable.rb: 9f2c...   # SHA256 of what the generator wrote
 ~~~
 
 `generator_version` records which gem version last ran, for a future upgrade check.
+
+## Doctor and upgrade
+
+~~~zsh
+bin/rails g active_engine --doctor                # read-only health check
+bin/rails g active_engine --upgrade --dry-run     # preview what an upgrade would do
+bin/rails g active_engine --upgrade               # re-run every installed tool
+bin/rails g active_engine --upgrade --only assetable
+~~~
+
+`--upgrade` re-runs each tool recorded in `.active_engine.yml` with its saved settings, so a
+newer gem version refreshes the generated code. Starter files you own are left alone. A generated
+file is only backed up when it differs from what a generator last wrote (the SHA256 under `files:`
+in the yml): untouched files are overwritten silently, files you edited get a `.backup`. Engines
+set up before checksums existed have none recorded: files that differ are backed up, and the
+checksums are recorded on that first upgrade.
+
+`--doctor` checks the recorded version, the recorded tools and every recorded file (unchanged,
+edited, missing). Edited files and an older version are warnings; missing files and unknown tools
+are problems and make the command exit non-zero.
+
+`--dry-run` (`-n`) works on every generator: it prints what would be created, changed or backed up
+and writes nothing, not even `.active_engine.yml`.
 
 ## Engines that already have their own setup
 

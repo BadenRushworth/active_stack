@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "erb"
 require "fileutils"
 require "rails/generators"
@@ -19,9 +20,24 @@ module ActiveEngine
         base.class_option :namespace,   type: :string,  desc: "Namespace for JS, CSS and pins (default: engine name)"
         base.class_option :interactive, type: :boolean, default: false, aliases: "-i",
                                         desc: "Prompt for choices instead of using saved/default values"
+        base.class_option :dry_run,     type: :boolean, default: false, aliases: "-n",
+                                        desc: "Show what would change and write nothing"
+      end
+
+      # --dry-run is Thor's own --pretend under a clearer name. Thor's file actions
+      # (create_file, inject_into_file, gsub_file ...) check options[:pretend], so turning it
+      # on here makes them all skip writing. Our own helpers (backups, yml, checksums)
+      # check dry_run?.
+      def initialize(*)
+        super
+        return unless options[:dry_run] && !options[:pretend]
+
+        @options = Thor::CoreExt::HashWithIndifferentAccess.new(options.to_h.merge("pretend" => true)).freeze
       end
 
       private
+
+      def dry_run? = !!(options[:dry_run] || options[:pretend])
 
       # -- engine discovery ---------------------------------------------------
 
@@ -79,9 +95,27 @@ module ActiveEngine
       def identifier_prefix = ns.tr("/_", "--")
 
       # Stores this run's choices in .active_engine.yml (a change only if the file changed).
+      # In a dry run the file is not written.
       def remember(section, **values)
         values.each { |key, value| engine_config.set(section, key, value) }
-        engine_config.write ? touched! : unchanged!
+        engine_config.write(dry_run: dry_run?) ? touched! : unchanged!
+      end
+
+      # -- checksums ----------------------------------------------------------
+
+      def sha256(data) = Digest::SHA256.hexdigest(data)
+
+      # True when the file on disk is exactly what a generator last wrote (checksum recorded
+      # in .active_engine.yml), i.e. the dev never edited it. No record counts as edited.
+      def pristine?(destination, existing)
+        recorded = engine_config.get("files", destination)
+        !recorded.nil? && recorded == sha256(existing)
+      end
+
+      def record_checksum(destination, content)
+        return if dry_run?
+
+        engine_config.set("files", destination, sha256(content))
       end
 
       # -- quiet file writing -------------------------------------------------
@@ -92,13 +126,14 @@ module ActiveEngine
       end
 
       # Generated file (concerns, helpers, demo): written when new or changed. A changed
-      # existing file is copied to <file>.backup first, so nothing is ever lost.
+      # existing file is copied to <file>.backup first, unless it still matches the checksum
+      # recorded when it was generated (then nothing of yours is lost).
       def put(source, destination)
         write_rendered(render_tt(source), destination)
       end
 
       # Starter file the dev owns (entry points, importmap): created once, then left alone.
-      # --force regenerates it (with a backup).
+      # --force regenerates it (with a backup unless it is still as generated).
       def seed(source, destination)
         content = render_tt(source)
         File.exist?(destination) && !options[:force] ? unchanged! : write_rendered(content, destination)
@@ -119,14 +154,20 @@ module ActiveEngine
       end
 
       def write_rendered(content, destination)
-        if !File.exist?(destination)
+        existing = File.exist?(destination) ? File.binread(destination) : nil
+
+        if existing.nil?
           create_file destination, content
-        elsif File.binread(destination) == content || options[:skip]
+        elsif existing == content
+          record_checksum(destination, content)
+          return unchanged!
+        elsif options[:skip]
           return unchanged!
         else
-          backup_file(destination)
+          backup_file(destination) unless pristine?(destination, existing)
           create_file destination, content, force: true
         end
+        record_checksum(destination, content)
         touched!
       end
 
@@ -135,16 +176,22 @@ module ActiveEngine
         target = "#{path}.backup"
         count  = 1
         target = "#{path}.backup.#{count += 1}" while File.exist?(target)
-        FileUtils.cp(path, target)
+        FileUtils.cp(path, target) unless dry_run?
         @backups = @backups.to_i + 1
         say_status :backup, target, :yellow
       end
 
       def touched!   = (@touched = @touched.to_i + 1)
       def unchanged! = (@unchanged = @unchanged.to_i + 1)
-      def changed?   = @touched.to_i.positive?
+      def changed?   = @touched.to_i.positive? && !dry_run?
 
       def ui_summary
+        if dry_run?
+          ui_warn "Dry run - nothing was written. #{@touched.to_i} would change, #{@unchanged.to_i} already up to date"
+          ui_info "#{@backups} file(s) would be backed up as *.backup" if @backups.to_i.positive?
+          return
+        end
+
         if changed?
           ui_ok "#{@touched} changed, #{@unchanged.to_i} already up to date"
         else
