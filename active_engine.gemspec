@@ -9,6 +9,6 @@ Gem::Specification.new do |spec|
   spec.summary     = "Toolkit and generators for Rails engines: Propshaft, importmap, Stimulus and migrations"
   spec.license     = "MIT"
   spec.required_ruby_version = ">= 3.1"
-  spec.files       = Dir["lib/**/*"]
+  spec.files       = Dir["lib/**/*", "README.md"]
   spec.add_dependency "rails", ">= 7.1"
 end
