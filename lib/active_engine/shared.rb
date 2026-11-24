@@ -76,7 +76,7 @@ module ActiveEngine
       end
 
       # Stimulus identifier prefix: data-controller="<ns-dashed>--name"
-      def identifier_prefix = ns.dasherize
+      def identifier_prefix = ns.tr("/_", "--")
 
       # Stores this run's choices in .active_engine.yml (a change only if the file changed).
       def remember(section, **values)
@@ -153,11 +153,22 @@ module ActiveEngine
         ui_info "#{@backups} file(s) backed up as *.backup - delete them once you've checked the changes." if @backups.to_i.positive?
       end
 
+      # The module the engine already includes for this tool, e.g. "ActiveStack::Migratable".
+      def existing_include(name)
+        File.read(engine_file)[/^\s*include\s+((?:::)?(?:\w+::)*#{name})\b/, 1]&.delete_prefix("::")
+      end
+
+      # True when the engine includes its own module for this tool (not the generated one).
+      def foreign_include?(name)
+        found = existing_include(name)
+        !found.nil? && found != "#{mod}::Concerns::#{name}"
+      end
+
       # Adds `require` + `include <Mod>::Concerns::<Name>` right after isolate_namespace
       # (the concerns build initializer names from engine_name, so order matters).
       def wire_concern(name)
         content = File.read(engine_file)
-        return unchanged! if content.include?("Concerns::#{name}")
+        return unchanged! if existing_include(name)
 
         unless content.match?(/^\s*isolate_namespace /)
           raise Thor::Error, "#{engine_file} has no isolate_namespace line - add it first, then re-run."

@@ -13,13 +13,18 @@ module ActiveEngine
 
       def welcome
         ui_step "Migratable - #{mod}"
+        ui_warn "Engine already includes #{existing_include('Migratable')} - keeping it, no concern generated." if foreign_include?("Migratable")
       end
 
       def copy_concern
+        return if foreign_include?("Migratable")
+
         put "migratable.rb.tt", "lib/#{engine_path}/concerns/migratable.rb"
       end
 
       def include_concern
+        return if foreign_include?("Migratable")
+
         wire_concern("Migratable")
       end
 

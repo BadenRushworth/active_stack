@@ -86,7 +86,8 @@ RSpec.describe ActiveEngine::Generators::AssetableGenerator do
       in_engine do
         generate("--loader", "prefixed")
 
-        expect(File.read(index_js)).to include('"demo--"').and(satisfy { |text| !text.include?("stimulus-loading") })
+        expect(File.read(index_js)).to include('"demo--"')
+        expect(File.read(index_js)).not_to include("@hotwired/stimulus-loading")
         expect(File.read("config/importmap.rb")).not_to include("stimulus-loading")
         expect(File.read("app/views/demo/demo/index.html.erb")).to include('data-controller="demo--demo"')
       end

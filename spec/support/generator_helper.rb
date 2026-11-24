@@ -74,3 +74,7 @@ module GeneratorHelper
 
   def ruby_syntax_ok?(path) = system("ruby", "-c", path, out: File::NULL, err: File::NULL)
 end
+
+# Example groups resolve bare constants lexically, not through included modules.
+LAYOUT = GeneratorHelper::LAYOUT
+CSS    = GeneratorHelper::CSS

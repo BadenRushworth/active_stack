@@ -22,9 +22,18 @@ module ActiveEngine
 
       def welcome
         ui_step "Assetable - #{mod}  (#{mode}, #{loader} loader, namespace #{ns})"
+        return unless foreign_include?("Assetable")
+
+        if isolated?
+          raise Thor::Error, "#{engine_file} already includes #{existing_include('Assetable')}. Re-run with " \
+                             "--mode shared --registry 'Your.registry' to add only the helpers, JavaScript and CSS."
+        end
+        ui_warn "Engine already includes #{existing_include('Assetable')} - keeping it, no concern generated."
       end
 
       def copy_concern_and_registry
+        return if foreign_include?("Assetable")
+
         put "assetable.rb.tt", "lib/#{engine_path}/concerns/assetable.rb"
         put "assets.rb.tt",    "lib/#{engine_path}/assets.rb" if isolated?
         wire_concern("Assetable")
